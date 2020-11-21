@@ -1,19 +1,17 @@
 #ifndef util
 #define util
 
+// ---
+// This is a collection of utilities I've used throughout this project
+// --
+
 enum side {
   left,
   right,
   none
 };
 
-float absolute(float v) {
-  if (v < 0) {
-    v *= -1;
-  }
-  return v;
-}
-
+// A custom datatype to hold an x and y co-ordinate
 class Vector2 {
 public:
   Vector2(float x, float y);

@@ -6,6 +6,11 @@
 #include <regex>
 #include <sstream>
 
+// ---
+// Code to display an image on the brain without an SD card
+// It works by decompressing a string of run length encoded image that has been processed by my
+// compressor app
+// ---
 bool rendered = false;
 
 char map[52] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k',

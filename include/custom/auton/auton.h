@@ -7,6 +7,16 @@
 #include <iostream>
 #include <vector>
 
+// ---
+// This code aims to make writing reliable autons much quicker and easier by
+// turning the field into a grid of co-ordinates and pathfinding from the bot's
+// current position to a desired target, the movement could be made much more accurate
+// by using a V5 inertial sensor
+// This code is currently limited by only being able to track it's position when being moved
+// by this code, it could be expanded upon by allowing diagonal movement and the ability to
+// move the bot back onto the grid when it is moved directly
+// ---
+
 using namespace vex;
 
 class auton {

@@ -3,6 +3,10 @@
 
 #include "vex.h"
 
+// ---
+// Code to easily add a button to the v5 brain, not made by me
+// ---
+
 class Button
 {
   public:

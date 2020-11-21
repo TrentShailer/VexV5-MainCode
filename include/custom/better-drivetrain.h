@@ -5,6 +5,10 @@
 #include "vex.h"
 #include <iostream>
 
+// ---
+// This code aims to improve drivetrain control by smoothly accelerating do a desired speed and smoothly decellerating
+// ---
+
 class BetterDrivetrain {
   private:
     Vector2 speed = Vector2(0, 0);

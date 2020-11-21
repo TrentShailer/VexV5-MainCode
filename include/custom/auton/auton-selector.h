@@ -5,6 +5,13 @@
 #include "/custom/util.h"
 #include "vex.h"
 
+// ---
+// Code to allow for the selection of an auton program based on the side
+// of the field the bot is on allowing for different behavior based upon
+// start position.
+// ---
+
+
 util::side curSide = none;
 
 Button autonButtons[] = {

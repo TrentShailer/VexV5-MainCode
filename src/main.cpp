@@ -1,11 +1,10 @@
-#include "custom/auton/auton.h"
 #include "custom/auton/auton-selector.h"
+#include "custom/auton/auton.h"
 #include "custom/better-drivetrain.h"
 #include "custom/better-motor.h"
 #include "custom/image/image-loader.h"
 #include "vex.h"
 #include <iostream>
-
 
 // ---- START VEXCODE CONFIGURED DEVICES ----
 // Robot Configuration:
@@ -20,14 +19,15 @@ using namespace vex;
 
 competition Competition;
 
+// Variables for better control
 BetterDrivetrain dt = BetterDrivetrain();
 BetterMotor bArm = BetterMotor(Arm);
 BetterMotor bClaw = BetterMotor(Claw);
 
-
 void pre_auton(void) {
   vexcodeInit();
 
+  // Set the max speed for the drivetrain and the modifier for the increase rate
   dt.maxSpeed = Vector2(66, 66);
   dt.modSpeed = Vector2(20, 20);
 
@@ -40,11 +40,13 @@ void pre_auton(void) {
 
 void autonomous(void) {
   auton a = auton();
+  // Initialise the auton code with the selected side
   a.Initialise(curSide);
-  if(curSide == util::left){
+
+  // Code for if they are on the left or right side
+  if (curSide == util::left) {
     a.MoveTo(Vector2(1, 2));
-  }
-  else{
+  } else {
     a.TurnToTile(Vector2(5, 0));
   }
 }
@@ -91,9 +93,10 @@ int main() {
   Competition.drivercontrol(usercontrol);
 
   pre_auton();
-  
+
   while (true) {
-    if(curSide == none){
+    if (curSide == none) {
+      // Render buttons for auton selection
       ButtonLoop(Competition);
       vex::task::sleep(7);
     } else {
@@ -102,6 +105,5 @@ int main() {
       }
       wait(100, msec);
     }
-    
   }
 }

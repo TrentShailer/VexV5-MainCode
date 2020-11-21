@@ -6,6 +6,10 @@
 #include <math.h>
 #include <string.h>
 
+// ---
+// This code aims to improve motor control by smoothing acceleration and decceleration
+// ---
+
 using namespace vex;
 
 class BetterMotor {
