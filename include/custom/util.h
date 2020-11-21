@@ -1,6 +1,12 @@
 #ifndef util
 #define util
 
+enum side {
+  left,
+  right,
+  none
+};
+
 float absolute(float v) {
   if (v < 0) {
     v *= -1;

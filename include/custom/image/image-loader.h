@@ -3,10 +3,10 @@
 
 #include "/images/logo.h"
 #include "vex.h"
-#include <list>
 #include <regex>
 #include <sstream>
 
+bool rendered = false;
 
 char map[52] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k',
                 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
@@ -39,6 +39,7 @@ std::vector<std::string> resplit(const std::string &s,
   return elems;
 }
 void DisplayImg() {
+  rendered = true;
   std::vector<std::string> instructions = resplit(rle);
 
   int n = sizeof(map) / sizeof(map[0]);
@@ -96,6 +97,7 @@ void DisplayImg() {
       i++;
     }
   }
+  Brain.Screen.render();
 }
 
 #endif
