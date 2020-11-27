@@ -5,188 +5,183 @@
 #include "math.h"
 #include "vex.h"
 #include <iostream>
+#include <queue>
+#include <stack>
 #include <vector>
+
 
 // ---
 // This code aims to make writing reliable autons much quicker and easier by
 // turning the field into a grid of co-ordinates and pathfinding from the bot's
-// current position to a desired target, the movement could be made much more accurate
-// by using a V5 inertial sensor
-// This code is currently limited by only being able to track it's position when being moved
-// by this code, it could be expanded upon by allowing diagonal movement and the ability to
-// move the bot back onto the grid when it is moved directly
+// current position to a desired target, the movement could be made much more
+// accurate by using a V5 inertial sensor This code is currently limited by only
+// being able to track it's position when being moved by this code, it could be
+// expanded upon by allowing diagonal movement and the ability to move the bot
+// back onto the grid when it is moved directly
 // ---
 
 using namespace vex;
 
-class auton {
-
-  class Edge {
-  public:
-    Vector2 _tile1 = Vector2(-1, -1);
-    Vector2 _tile2 = Vector2(-1, -1);
-    Edge(Vector2 tile1, Vector2 tile2) { _tile1 = tile1; }
-  };
-
-  enum orientation { north = 0, east = 90, south = 180, west = 270, none = 0 };
-
-  bool IsEqual(Vector2 a, Vector2 b) {
-    if (a.x == b.x && a.y == b.y)
-      return true;
-    return false;
-  }
-  std::vector<Edge> edges = {
-      Edge(Vector2(2, 0), Vector2(3, 0)), Edge(Vector2(0, 3), Vector2(0, 2)),
-      Edge(Vector2(2, 5), Vector2(3, 5)), Edge(Vector2(5, 3), Vector2(5, 2)),
-      Edge(Vector2(2, 2), Vector2(3, 2)), Edge(Vector2(2, 2), Vector2(2, 3)),
-      Edge(Vector2(3, 3), Vector2(2, 3)), Edge(Vector2(3, 3), Vector2(3, 2))};
-
-  std::vector<Vector2> GetEdges(Vector2 tile) {
-    std::vector<Vector2> allEdges;
-    std::vector<Vector2>::iterator it;
-    it = allEdges.begin();
-
-    for (int i = 0; i < edges.size(); i++) {
-      if (IsEqual(edges[i]._tile1, tile)) {
-        it = allEdges.insert(it, edges[i]._tile2);
-      } else if (IsEqual(edges[i]._tile2, tile)) {
-        it = allEdges.insert(it, edges[i]._tile1);
-      }
-    }
-    return allEdges;
-  }
+class Edge {
 public:
-  int width = 6;
-  int height = 6;
+  Vector2 _tile1 = Vector2(-1, -1);
+  Vector2 _tile2 = Vector2(-1, -1);
+  Edge(Vector2 tile1, Vector2 tile2) { _tile1 = tile1; }
+};
 
-  Vector2 currentPos = Vector2(0, 0);
-  orientation currentDir = north;
-private:
-  std::vector<Vector2> GetAdjacent(Vector2 pos) {
-    std::vector<Vector2> adjacent;
-    std::vector<Vector2>::iterator it;
-    it = adjacent.begin();
+enum orientation { north = 0, east = 90, south = 180, west = 270, noO = 0 };
 
-    for (int x = pos.x - 1; x <= pos.x + 1; x++) {
-      if (x >= 0 && x < width && x != pos.x) {
-        adjacent.insert(it, Vector2(x, pos.y));
-      }
+bool IsEqual(Vector2 a, Vector2 b) {
+  if (a.x == b.x && a.y == b.y)
+    return true;
+  return false;
+}
+
+Edge edges[8] = {
+    Edge(Vector2(2, 0), Vector2(3, 0)), Edge(Vector2(0, 3), Vector2(0, 2)),
+    Edge(Vector2(2, 5), Vector2(3, 5)), Edge(Vector2(5, 3), Vector2(5, 2)),
+    Edge(Vector2(2, 2), Vector2(3, 2)), Edge(Vector2(2, 2), Vector2(2, 3)),
+    Edge(Vector2(3, 3), Vector2(2, 3)), Edge(Vector2(3, 3), Vector2(3, 2))};
+
+std::vector<Vector2> GetEdges(Vector2 tile) {
+  std::vector<Vector2> allEdges;
+
+  for (int i = 0; i < 8; i++) {
+    if (IsEqual(edges[i]._tile1, tile)) {
+      allEdges.push_back(edges[i]._tile2);
+    } else if (IsEqual(edges[i]._tile2, tile)) {
+      allEdges.push_back(edges[i]._tile1);
     }
-    for (int y = pos.y - 1; y <= pos.y + 1; y++) {
-      if (y >= 0 && y < height && y != pos.y) {
-        adjacent.insert(it, Vector2(pos.x, y));
-      }
+  }
+  return allEdges;
+}
+
+int width = 6;
+int height = 6;
+
+Vector2 currentPos = Vector2(0, 0);
+orientation currentDir = north;
+
+std::vector<Vector2> GetAdjacent(Vector2 pos) {
+  std::vector<Vector2> adjacent;
+
+  for (int x = pos.x - 1; x <= pos.x + 1; x++) {
+    if (x >= 0 && x < width && x != pos.x) {
+      adjacent.push_back(Vector2(x, pos.y));
     }
-    return adjacent;
   }
-
-  float GetDistance(Vector2 a, Vector2 b) {
-    float px = powf(b.x - a.x, 2);
-    float py = powf(b.y - a.y, 2);
-    float dist = sqrtf(px + py);
-    return dist;
+  for (int y = pos.y - 1; y <= pos.y + 1; y++) {
+    if (y >= 0 && y < height && y != pos.y) {
+      adjacent.push_back(Vector2(pos.x, y));
+    }
   }
+  return adjacent;
+}
 
-  std::vector<Vector2> GeneratePath(Vector2 pos, Vector2 target) {
-    std::vector<Vector2> path;
-    std::vector<Vector2>::iterator pIt;
-    pIt = path.begin();
+float GetDistance(Vector2 a, Vector2 b) {
+  float px = powf(b.x - a.x, 2);
+  float py = powf(b.y - a.y, 2);
+  float dist = sqrtf(px + py);
+  return dist;
+}
 
-    std::vector<Vector2> queue = {pos};
-    std::vector<Vector2>::iterator qIt;
-    std::vector<Vector2>::iterator qIt2;
-    qIt2 = queue.begin();
+std::vector<Vector2> GeneratePath(Vector2 pos, Vector2 target) {
+  std::vector<Vector2> path;
 
-    int t = 0;
+  std::queue<Vector2> curQueue;
+  curQueue.push(pos);
+  int t = 0;
+  while (!curQueue.empty() && t < 50) {
+    Vector2 node = curQueue.front();
+    curQueue.pop();
 
-    while (queue.size() > 0 && t < 50) {
-      qIt = prev(queue.end());
-      Vector2 node = queue[queue.size() - 1];
-      queue.erase(qIt);
+    Vector2 bestPos = Vector2(0, 0);
+    float bestScore = 10000;
+    std::vector<Vector2> adjacent = GetAdjacent(node);
+    for (auto n : adjacent) {
+      float score = GetDistance(n, target);
+      if (score < bestScore) {
+        std::vector<Vector2> allEdges = GetEdges(node);
+        bool flag = false;
 
-      Vector2 bestPos = Vector2(0, 0);
-      float bestScore = 10000;
-      std::vector<Vector2> adjacent = GetAdjacent(node);
-      for (int i = 0; i < adjacent.size(); i++) {
-        float score = GetDistance(adjacent[i], target);
-        if (score < bestScore) {
-          std::vector<Vector2> allEdges = GetEdges(node);
-          bool flag = false;
-
-          if (allEdges.size() > 0) {
-            for (int j = 0; j < allEdges.size(); j++) {
-              if (IsEqual(allEdges[j], adjacent[i])) {
-                flag = true;
-              }
+        if (allEdges.size() > 0) {
+          for (auto j : adjacent) {
+            if (IsEqual(j, n)) {
+              flag = true;
             }
           }
-          if (flag == true) {
-            continue;
-          }
-          bestScore = score;
-          bestPos = adjacent[i];
         }
+        if (flag == true) {
+          continue;
+        }
+        bestScore = score;
+        bestPos = n;
       }
-      queue.insert(qIt2, bestPos);
-      path.insert(pIt, bestPos);
-
-      if (bestScore == 0 || bestScore == 10000)
-        return path;
-      t++;
     }
-    return std::vector<Vector2>{};
-  }
+    curQueue.push(bestPos);
+    path.push_back(bestPos);
 
-  orientation GetDir(Vector2 a, Vector2 b) {
-    if (b.x > a.x)
-      return east;
-    else if (a.x > b.x)
-      return west;
-    else if (b.y > a.y)
-      return north;
-    else if (a.y > b.y)
-      return south;
-    else
-      return none;
+    if (bestScore == 0 || bestScore == 10000)
+      return path;
+    t++;
   }
+  std::vector<Vector2> failSafe;
+  return failSafe;
+}
 
-  double GetAngle(orientation a, orientation b) {
-    double ang = b - a;
-    return ang;
-  }
-public:
-  void TurnToTile(Vector2 target) {
-    orientation targetDir = GetDir(currentPos, target);
-    if (targetDir != none) {
-      double ang = GetAngle(currentDir, targetDir);
-      if (ang == 0 || ang == 360)
-        return;
-      Drivetrain.turnFor(vex::right, ang, deg);
-      wait(500, msec);
-    }
-  }
+orientation GetDir(Vector2 a, Vector2 b) {
+  if (b.x > a.x)
+    return east;
+  else if (a.x > b.x)
+    return west;
+  else if (b.y > a.y)
+    return north;
+  else if (a.y > b.y)
+    return south;
+  else
+    return noO;
+}
 
-  void MoveTo(Vector2 target) {
-    std::vector<Vector2> path = GeneratePath(currentPos, target);
-    for (int i = 0; i < path.size(); i++) {
-      Vector2 nextTile = path[i];
-      TurnToTile(nextTile);
-      Drivetrain.driveFor(600, mm, 50, rpm);
-      wait(500, msec);
-    }
-  }
+double GetAngle(orientation a, orientation b) {
+  double ang = b - a;
+  return ang;
+}
 
-  void Initialise(util::side selectedSide) {
-    int x = 0;
-    int y = 0;
-    currentDir = north;
-    if (selectedSide == util::left) {
-      x = 1;
-    } else {
-      x = 4;
-    }
-    currentPos = Vector2(x, y);
+void TurnToTile(Vector2 target) {
+  orientation targetDir = GetDir(currentPos, target);
+  if (targetDir != noO) {
+    double ang = GetAngle(currentDir, targetDir);
+    if (ang == 0 || ang == 360)
+      return;
+    Drivetrain.turnFor(vex::right, ang / 2, degrees);
+    wait(500, msec);
   }
-};
+}
+
+void MoveTo(Vector2 target) {
+
+  std::vector<Vector2> path = GeneratePath(currentPos, target);
+
+  for (auto p : path) {
+    Vector2 nextTile = p;
+    TurnToTile(nextTile);
+    Drivetrain.driveFor(600, mm, 100, rpm);
+    wait(500, msec);
+  }
+}
+
+void Initialise(util::side selectedSide) {
+  std::cout << "Auton Initialised" << std::endl;
+  int x = 0;
+  int y = 0;
+  currentDir = north;
+  if (selectedSide == util::left) {
+    x = 1;
+  } else {
+    x = 4;
+  }
+  currentPos = Vector2(x, y);
+}
+
 // Grid is taken from your teams bottom left
 #endif

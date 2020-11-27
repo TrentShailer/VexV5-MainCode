@@ -25,10 +25,10 @@ class BetterDrivetrain {
 
     void Drive(Vector2 target) {
       float xIncreaseBy = (target.x - speed.x) / modSpeed.x;
-      speed.x < target.x ? speed.x += xIncreaseBy : speed.x += xIncreaseBy * 2.0f;
+      speed.x < target.x ? speed.x += xIncreaseBy : speed.x += xIncreaseBy;
 
       float yIncreaseBy = (target.y - speed.y) / modSpeed.y;
-      speed.y < target.y ? speed.y += yIncreaseBy : speed.y += yIncreaseBy * 2.0f;
+      speed.y < target.y ? speed.y += yIncreaseBy : speed.y += yIncreaseBy;
 
       if (speed.within(stoppingThreshold) && target.within(stoppingThreshold)) {
         return Stop();
