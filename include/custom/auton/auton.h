@@ -9,7 +9,6 @@
 #include <stack>
 #include <vector>
 
-
 // ---
 // This code aims to make writing reliable autons much quicker and easier by
 // turning the field into a grid of co-ordinates and pathfinding from the bot's
@@ -103,7 +102,6 @@ std::vector<Vector2> GeneratePath(Vector2 pos, Vector2 target) {
       if (score < bestScore) {
         std::vector<Vector2> allEdges = GetEdges(node);
         bool flag = false;
-
         if (allEdges.size() > 0) {
           for (auto j : adjacent) {
             if (IsEqual(j, n)) {
@@ -150,10 +148,12 @@ double GetAngle(orientation a, orientation b) {
 void TurnToTile(Vector2 target) {
   orientation targetDir = GetDir(currentPos, target);
   if (targetDir != noO) {
-    double ang = GetAngle(currentDir, targetDir);
+    double ang = GetAngle(currentDir, targetDir) / 2;
     if (ang == 0 || ang == 360)
       return;
-    Drivetrain.turnFor(vex::right, ang / 2, degrees);
+    if(ang * 2 == 270) ang = -90 / 2;
+    std::cout << "Turning for " << ang * 2 << " degrees" << std::endl;
+    Drivetrain.turnFor(vex::right, ang, degrees);
     wait(500, msec);
   }
 }

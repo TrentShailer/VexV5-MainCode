@@ -1,10 +1,12 @@
-#include "custom/auton/auton-selector.h"
 #include "custom/auton/auton.h"
 #include "custom/better-drivetrain.h"
 #include "custom/better-motor.h"
-// #include "custom/image/image-loader.h"
+#include "custom/image/image-loader.h"
 #include "vex.h"
 #include <iostream>
+#include <sstream>
+#include <string>
+#include <vex_task.h>
 
 // ---- START VEXCODE CONFIGURED DEVICES ----
 // Robot Configuration:
@@ -15,12 +17,9 @@
 // Claw                 motor         6
 // ---- END VEXCODE CONFIGURED DEVICES ----
 
-// Sensors:
-// Bottom toggles mid
-// Second toggles mid and top
-// Final toggles second
-
 using namespace vex;
+
+util::side curSide = none;
 
 competition Competition;
 
@@ -56,11 +55,39 @@ void pre_auton(void) {
   bBack.modSpeed = 10;
 }
 
-void LeftAuton() { MoveTo(Vector2(1, 1)); }
+void LeftAuton() {
+  top.spinFor(forward, 180, deg);
+  // TurnToTile(Vector2(2, 0));
+  Drivetrain.driveFor(forward, -350, mm);
+  for (int i = 0; i < 10; i++) {
+    bTop.Drive(-100);
+    bBack.Drive(-100);
+  }
 
-void RightAuton() { TurnToTile(Vector2(5, 0)); }
+  wait(2, sec);
+  for (int i = 0; i < 25; i++) {
+    bTop.Drive(0);
+    bBack.Drive(0);
+  }
+}
+
+void RightAuton() {
+  top.spinFor(forward, 180, deg);
+  TurnToTile(Vector2(1, 0));
+  Drivetrain.driveFor(forward, -300, mm);
+  for (int i = 0; i < 10; i++) {
+    bTop.Drive(-100);
+    bBack.Drive(-100);
+  }
+  wait(2, sec);
+  for (int i = 0; i < 25; i++) {
+    bTop.Drive(0);
+    bBack.Drive(0);
+  }
+}
 
 void autonomous(void) {
+  curSide = util::left;
   // Initialise the auton code with the selected side
   Initialise(curSide);
 
@@ -72,11 +99,30 @@ void autonomous(void) {
   }
 }
 
+Vector2 maxDTSpeed = Vector2(40, 40);
+
+int DisplayLoop() {
+  while (true) {
+
+    Controller1.Screen.clearScreen();
+    Controller1.Screen.newLine();
+    std::ostringstream s;
+    s << "Max Speed: " << maxDTSpeed.x;
+
+    Controller1.Screen.print(s.str().c_str());
+
+    this_thread::sleep_for(20);
+  }
+  return 0;
+}
+
 void usercontrol(void) {
+
+  vex::thread t1(DisplayLoop);
   bool front_toggle = false;
   int front_speed = 0;
   int toggle_wait = 0;
-  bool autonToggle = false;
+  int speed_wait = 0;
   while (1) {
     // -- Drivetrain Control
     Vector2 target =
@@ -115,27 +161,27 @@ void usercontrol(void) {
       bBack.Drive(0);
     }
 
-    if (Controller1.ButtonX.pressing() && !autonToggle) {
-      autonToggle = true;
-      // Initialise the auton code with the selected side
-      Initialise(curSide);
-      if (curSide == util::left) {
-        LeftAuton();
-      } else if (curSide == util::right) {
-        RightAuton();
-      }
-    }
     // -- Alternate Drive Speeds
-    if (Controller1.ButtonA.pressing()) {
-      dt.maxSpeed = Vector2(25, 25);
-    } else if (Controller1.ButtonB.pressing()) {
-      dt.maxSpeed = Vector2(66, 66);
-    } else if (Controller1.ButtonY.pressing()) {
-      dt.maxSpeed = Vector2(100, 100);
-    }
+    if (Controller1.ButtonUp.pressing() && maxDTSpeed.x + 10 < 105 &&
+        speed_wait > 10) {
+      speed_wait = 0;
+      maxDTSpeed.x += 10;
+      maxDTSpeed.y += 10;
+      dt.maxSpeed = maxDTSpeed;
 
-    wait(20, msec);
+    } else if (Controller1.ButtonDown.pressing() && maxDTSpeed.x - 10 > 5 &&
+               speed_wait > 10) {
+      speed_wait = 0;
+      maxDTSpeed.x -= 10;
+      maxDTSpeed.y -= 10;
+      dt.maxSpeed = maxDTSpeed;
+    }
+    if (speed_wait < 15) {
+      speed_wait++;
+    }
+    this_thread::sleep_for(20);
   }
+  t1.interrupt();
 }
 
 int main() {
@@ -143,18 +189,11 @@ int main() {
   Competition.drivercontrol(usercontrol);
   pre_auton();
 
-  curSide = util::right;
   while (true) {
-    if (curSide == none) {
-      // TODO - Fix button display
-      // Render buttons for auton selection
-      ButtonLoop(Competition);
-      vex::task::sleep(7);
-    } else {
-      // if (!rendered) {
-      //   DisplayImg();
-      // }
-      wait(100, msec);
+
+    if (!rendered) {
+      DisplayImg();
     }
+    wait(100, msec);
   }
 }
