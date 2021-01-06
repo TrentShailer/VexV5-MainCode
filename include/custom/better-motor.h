@@ -14,10 +14,10 @@ using namespace vex;
 
 class BetterMotor {
   private:
-    motor _motor = NULL;
+    motor _motor;
     float speed = 0;
   public:
-    BetterMotor(motor m){
+    BetterMotor(motor m) : _motor(m){
       _motor = m;
     }
 

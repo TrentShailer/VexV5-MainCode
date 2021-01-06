@@ -12,11 +12,7 @@
 // ---
 // This code aims to make writing reliable autons much quicker and easier by
 // turning the field into a grid of co-ordinates and pathfinding from the bot's
-// current position to a desired target, the movement could be made much more
-// accurate by using a V5 inertial sensor This code is currently limited by only
-// being able to track it's position when being moved by this code, it could be
-// expanded upon by allowing diagonal movement and the ability to move the bot
-// back onto the grid when it is moved directly
+// current position to a desired target
 // ---
 
 using namespace vex;
@@ -151,7 +147,8 @@ void TurnToTile(Vector2 target) {
     double ang = GetAngle(currentDir, targetDir) / 2;
     if (ang == 0 || ang == 360)
       return;
-    if(ang * 2 == 270) ang = -90 / 2;
+    if (ang * 2 == 270)
+      ang = -90 / 2;
     std::cout << "Turning for " << ang * 2 << " degrees" << std::endl;
     Drivetrain.turnFor(vex::right, ang, degrees);
     wait(500, msec);
