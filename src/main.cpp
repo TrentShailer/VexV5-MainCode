@@ -1,7 +1,7 @@
 #include "custom/auton/auton.h"
 #include "custom/better-drivetrain.h"
 #include "custom/better-motor.h"
-#include "custom/easy-binds.h"
+
 #include "custom/image/image-loader.h"
 #include "vex.h"
 #include <iostream>
@@ -24,7 +24,7 @@ Vector2 maxDTSpeed = Vector2(40, 40);
 #pragma endregion
 
 util::side curSide = none;
-
+static const char * EnumStrings[] = { "Left", "Right", "None" };
 bool canToggle = true;
 
 void AutonSelection() {
@@ -40,7 +40,7 @@ void AutonSelection() {
     Controller1.Screen.clearScreen();
     Controller1.Screen.newLine();
     std::ostringstream s;
-    s << "Current Auton: " << curSide;
+    s << "Current Auton: " << EnumStrings[curSide];
 
     Controller1.Screen.print(s.str().c_str());
 
@@ -50,7 +50,7 @@ void AutonSelection() {
   Controller1.Screen.clearScreen();
   Controller1.Screen.newLine();
   std::ostringstream s;
-  s << "Confirmed Auton: " << curSide;
+  s << "Confirmed Auton: " << EnumStrings[curSide];
 
   Controller1.Screen.print(s.str().c_str());
 }
@@ -74,11 +74,9 @@ void pre_auton(void) {
 
 #pragma region Auton
 
-void LeftAuton() {
-}
+void LeftAuton() {}
 
-void RightAuton() {
-}
+void RightAuton() {}
 
 #pragma endregion
 
@@ -106,6 +104,14 @@ int DisplayLoop() {
   return 0;
 }
 
+int ResetToggle(void *arg) {
+  bool *canChange = (bool *)arg;
+  *canChange = false;
+  this_thread::sleep_for(500);
+  *canChange = true;
+  return 1;
+}
+
 void ControlDriveSpeed() {
   if (Controller1.ButtonUp.pressing() && maxDTSpeed.x + 10 < 105 && canToggle) {
     void *arg = &canToggle;
@@ -129,24 +135,12 @@ void ControlDriveSpeed() {
 void usercontrol(void) {
   vex::thread t1(DisplayLoop);
 
-#pragma region Binds
-
-  binding example_bind =
-      binding(Controller1.ButtonR1, Controller1.ButtonR2, bExample, 100, true);
-
-#pragma endregion
-
   while (1) {
     Vector2 target =
         Vector2(Controller1.Axis3.position(), Controller1.Axis2.position());
     dt.Drive(target);
 
-#pragma region BindCall
 
-    example_bind.RunCtrl();
-
-#pragma endregion
-    
     ControlDriveSpeed();
 
     this_thread::sleep_for(20);
